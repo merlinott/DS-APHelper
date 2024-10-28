@@ -3,57 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>List Comparison Tool</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Coordinate Comparison</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Compare Two Lists</h1>
-    <form id="compare-form">
-        <div>
-            <label for="list1">Eigene Dörfer:</label><br>
-            <textarea id="list1" name="list1" rows="10" cols="30"></textarea>
-        </div>
-        <div>
-            <label for="list2">Dörfer aus dem AP:</label><br>
-            <textarea id="list2" name="list2" rows="10" cols="30"></textarea>
-        </div>
+    <h1>Coordinate Comparison</h1>
+    
+    <form id="compareForm">
+        <label for="list1">List 1 (123|123 format):</label>
+        <textarea id="list1" name="list1" rows="10"></textarea>
+        
+        <label for="list2">List 2 (123|123 format):</label>
+        <textarea id="list2" name="list2" rows="10"></textarea>
+        
         <button type="submit">Compare</button>
     </form>
 
     <h2>Results</h2>
-    <div id="results">
-        <p><strong>Nicht Verplante Dörfer:</strong> <span id="unique-to-list1"></span></p>
-        <p><strong>Verplante Off Dörfer:</strong> <span id="common-items"></span></p>
-        <br>
-        <br>
-        <br>
-        <p><strong>Alle Dörfer aus dem AP:</strong> <span id="unique-to-list2"></span></p>
-        <p id="error-message" style="color: red;"></p>
-    </div>
+    <!-- Text area for displaying results with bolded matching items -->
+    <textarea id="results" rows="10" readonly></textarea>
+    <button id="copyButton">Copy Results</button>
 
     <script>
-        document.getElementById("compare-form").onsubmit = async function(event) {
+        document.getElementById("compareForm").addEventListener("submit", async function(event) {
             event.preventDefault();
-            document.getElementById("error-message").textContent = "";  // Clear previous error
-
-            const formData = new FormData(event.target);
+            
+            const list1 = document.getElementById("list1").value;
+            const list2 = document.getElementById("list2").value;
+            
+            // Send data to Flask server
             const response = await fetch("/compare", {
                 method: "POST",
-                body: formData
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                    "list1": list1,
+                    "list2": list2,
+                }),
             });
+            
+            const resultData = await response.json();
 
-            const result = await response.json();
-
-            if (response.ok) {
-                // Populate results
-                document.getElementById("common-items").textContent = result.common_items.join(", ");
-                document.getElementById("unique-to-list1").textContent = result.unique_to_list1.join(", ");
-                document.getElementById("unique-to-list2").textContent = result.unique_to_list2.join(", ");
-            } else {
-                // Display error message
-                document.getElementById("error-message").textContent = result.error;
+            // Check for errors
+            if (resultData.error) {
+                document.getElementById("results").value = resultData.error;
+                return;
             }
-        };
+
+            // Format results for display
+            const commonItems = resultData.common_items.map(item => `<strong>${item}</strong>`);
+            const uniqueToList1 = resultData.unique_to_list1;
+            const uniqueToList2 = resultData.unique_to_list2;
+
+            // Combine all results into a single string
+            const resultsText = `
+                Common Items:\n${commonItems.join(", ")}
+                \n\nUnique to List 1:\n${uniqueToList1.join(", ")}
+                \n\nUnique to List 2:\n${uniqueToList2.join(", ")}
+            `;
+
+            // Display results in the textarea
+            document.getElementById("results").innerHTML = resultsText;
+        });
+
+        // Copy results to clipboard
+        document.getElementById("copyButton").addEventListener("click", function() {
+            const resultsTextarea = document.getElementById("results");
+            resultsTextarea.select();
+            document.execCommand("copy");
+            alert("Results copied to clipboard!");
+        });
     </script>
 </body>
 </html>
