@@ -1,0 +1,26 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    text-align: center;
+}
+
+form {
+    display: inline-block;
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+textarea {
+    width: 100%;
+    resize: vertical;
+}
+
+button {
+    display: block;
+    margin: 10px auto;
+}
+
+#results {
+    display: inline-block;
+    text-align: left;
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Comparison Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Compare Two Lists</h1>
+    <form id="compare-form">
+        <div>
+            <label for="list1">Eigene Dörfer:</label><br>
+            <textarea id="list1" name="list1" rows="10" cols="30"></textarea>
+        </div>
+        <div>
+            <label for="list2">Dörfer aus dem AP:</label><br>
+            <textarea id="list2" name="list2" rows="10" cols="30"></textarea>
+        </div>
+        <button type="submit">Compare</button>
+    </form>
+
+    <h2>Results</h2>
+    <div id="results">
+        <p><strong>Nicht Verplante Dörfer:</strong> <span id="unique-to-list1"></span></p>
+        <p><strong>Verplante Off Dörfer:</strong> <span id="common-items"></span></p>
+        <br>
+        <br>
+        <br>
+        <p><strong>Alle Dörfer aus dem AP:</strong> <span id="unique-to-list2"></span></p>
+        <p id="error-message" style="color: red;"></p>
+    </div>
+
+    <script>
+        document.getElementById("compare-form").onsubmit = async function(event) {
+            event.preventDefault();
+            document.getElementById("error-message").textContent = "";  // Clear previous error
+
+            const formData = new FormData(event.target);
+            const response = await fetch("/compare", {
+                method: "POST",
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Populate results
+                document.getElementById("common-items").textContent = result.common_items.join(", ");
+                document.getElementById("unique-to-list1").textContent = result.unique_to_list1.join(", ");
+                document.getElementById("unique-to-list2").textContent = result.unique_to_list2.join(", ");
+            } else {
+                // Display error message
+                document.getElementById("error-message").textContent = result.error;
+            }
+        };
+    </script>
+</body>
+</html>
